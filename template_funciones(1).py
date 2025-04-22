@@ -1,3 +1,5 @@
+import numpy as np
+import scipy.linalg
 def construye_adyacencia(D,m): 
     # Función que construye la matriz de adyacencia del grafo de museos
     # D matriz de distancias, m cantidad de links por nodo
@@ -10,18 +12,77 @@ def construye_adyacencia(D,m):
     np.fill_diagonal(A,0) # Borramos diagonal para eliminar autolinks
     return(A)
 
-def calculaLU(matriz):
+def calcula_transicion(A):
+  n= A.shape[0]
+  #calcular A transpuesta
+  A_t = np.transpose(A)
+  #calcular K
+  diagonal = np.sum(A, axis=1)
+  K = np.diag(diagonal)
+  #calcular K inversa
+  K_inv= np.diag(1/diagonal)
+  #multiplicacion y obtener C (transicion)
+  C = A_t @ K_inv
+  return C
+
+
+def calcula_M (D, m, alpha):
+    #D es la matriz de distancias, m es el numero m vecinos mas cercanos a considerar y alpha el factor de amortiguamiento
+    A= construye_adyacencia(D,m)
+    n= A.shape[0]
+    C = calcula_transicion(A)
+    return  n/alpha * ( np.identity(n) - (1-alpha) * C )
+
+def calculaLU(A):
     # matriz es una matriz de NxN
     # Retorna la factorización LU a través de una lista con dos matrices L y U de NxN.
     # Completar! Have fun
+    m=A.shape[0]#fila
+    n=A.shape[1]
+    Ac = A.copy()#U
+    #L=np.eye(n)
+    if m!=n:
+        print('Matriz no cuadrada')
+        return
     
+    ## desde aqui -- CODIGO A COMPLETAR
+    print(n)
+    for j in range(n):
+        for i in range (j+1,n):
+            mult=Ac[i,j]/Ac[j,j] #escalonas/mult es el factor tipo f2-multf1
+            Ac[i,j:] = Ac[i,j:]-mult*Ac[j,j:]#resta de finlas// j: dessde j hasta el final
+            Ac[i,j]=mult
+         #   Ac[i,:]==Ac[i,:]-L[i,j]*Ac[j,:] 
+           # cant_op= cant_op+2
+          #  return L, Ac, cant_op
+                 
+    #L = np.tril(Ac,-1) + np.eye(A.shape[0]) #np.eye es la matriz con 1 en diagonal ()
+    #U = np.triu(Ac) #CAPTA LA DIAGONAL INFERIOE
+         
+            
+    return Ac
+
+def resolver_LU (L,U,b):
+    # Resuelve el sistema Ax=b usando la factorización LU
+    # L: matriz triangular inferior
+    # U: matriz triangular superior
+    # b: vector de términos independientes
+    # Retorna el vector solución x
+    y = scipy.linalg.solve_triangular(L, b, lower=True)  # Resolvemos Ly = b
+    x = scipy.linalg.solve_triangular(U, y)  # Resolvemos Ux = y
+    return x
 
 def calcula_matriz_C(A): 
-    # Función para calcular la matriz de trancisiones C
-    # A: Matriz de adyacencia
-    # Retorna la matriz C
-    Kinv = ... # Calcula inversa de la matriz K, que tiene en su diagonal la suma por filas de A
-    C = ... # Calcula C multiplicando Kinv y A
+    n= A.shape[0]
+    #calcular A transpuesta
+    A_t = np.transpose(A)
+    #calcular K
+    diagonal = np.sum(A, axis=1)
+    K = np.diag(diagonal)
+    #calcular K inversa
+    K_inv= np.diag(1/diagonal)
+    #multiplicacion y obtener C (transicion)
+    C = A_t @ K_inv
     return C
 
     
@@ -59,4 +120,5 @@ def calcula_B(C,cantidad_de_visitas):
     B = np.eye(C.shape[0])
     for i in range(cantidad_de_visitas-1):
         # Sumamos las matrices de transición para cada cantidad de pasos
+        B += np.linalg.matrix_power(C, i + 1)
     return B
