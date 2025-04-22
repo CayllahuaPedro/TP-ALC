@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.linalg
+import matplotlib.pyplot as plt
+import geopandas as gpd
 def construye_adyacencia(D,m): 
     # Función que construye la matriz de adyacencia del grafo de museos
     # D matriz de distancias, m cantidad de links por nodo
@@ -61,6 +63,25 @@ def calculaLU(A):
          
             
     return Ac
+
+def graph_map_rank (L, U, b, barrios, museos):
+    ranking_scores = resolver_LU(L, U, b)
+    normalized_ranking_scores = (ranking_scores - ranking_scores.min()) / (ranking_scores.max() - ranking_scores.min())
+
+
+    # graficar mapa
+    fig, ax = plt.subplots(figsize=(10, 10))
+    barrios.boundary.plot(color='gray', ax=ax)
+
+    # graficar museos con label de ranking.
+    museos.plot(ax=ax, column=normalized_ranking_scores, cmap='viridis', legend=True, markersize=normalized_ranking_scores*100)  # Adjust markersize for better visibility
+
+    # Asociar cada museo con su ranking
+    #for x, y, label in zip(museos.geometry.x, museos.geometry.y, normalized_ranking_scores):
+    #    ax.annotate(f'{label:.2f}', xy=(x, y), xytext=(3, 3), textcoords="offset points", fontsize=8)
+
+    plt.title("Museos de CABA con Rankings")
+    plt.show()
 
 def resolver_LU (L,U,b):
     # Resuelve el sistema Ax=b usando la factorización LU
