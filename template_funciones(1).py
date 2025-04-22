@@ -64,8 +64,7 @@ def calculaLU(A):
             
     return Ac
 
-def graph_map_rank (L, U, b, barrios, museos):
-    ranking_scores = resolver_LU(L, U, b)
+def graph_map_rank (ranking_scores, barrios, museos):
     normalized_ranking_scores = (ranking_scores - ranking_scores.min()) / (ranking_scores.max() - ranking_scores.min())
 
 
