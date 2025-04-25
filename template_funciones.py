@@ -33,6 +33,7 @@ def construye_adyacencia(D, m):
     np.fill_diagonal(A,0) # Borramos diagonal para eliminar autolinks
     return A
 
+
 def calcula_transicion(A):
   n= A.shape[0]
   #calcular A transpuesta
@@ -128,6 +129,21 @@ def calcula_matriz_C_continua(D):
     Kinv = np.diag(1/diagonal)
     C = Kinv @ F
     return C
+
+def calcula_pagerank(A,alfa):
+    # Función para calcular PageRank usando LU  
+    # A: Matriz de adyacencia
+    # alfa: coeficientes de damping
+    # Retorna: Un vector p con los coeficientes de page rank de cada museo
+    C = calcula_matriz_C(A)
+    N = A.shape[0] # Obtenemos el número de museos N a partir de la estructura de la matriz A
+    M = N/alfa * ( np.identity(N) - (1-alfa) * C ) # Calculamos M = (1-d) * C
+    LU = calculaLU(M) # Calculamos descomposición LU a partir de C y d
+    L = np.tril(LU,-1) + np.eye(A.shape[0]) #np.eye es la matriz con 1 en diagonal ()
+    U = np.triu(LU) #CAPTA LA DIAGONAL INFERIOE
+    b = np.ones(N) # Vector de 1s, multiplicado por el coeficiente correspondiente usando d y N.
+    p = resolver_LU(L, U, b) # Resolvemos el sistema LU
+    return p
 
 #esto construye la matriz de adyacencia continua
 def calcula_matriz_continua(D):
