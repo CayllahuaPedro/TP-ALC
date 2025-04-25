@@ -118,6 +118,12 @@ def calcula_matriz_C(A):
     C = A_t @ K_inv
     return C
 
+def calcula_M (D, m, alpha):
+    #D es la matriz de distancias, m es el numero m vecinos mas cercanos a considerar y alpha el factor de amortiguamiento
+    A= construye_adyacencia(D,m)
+    n= A.shape[0]
+    C = calcula_transicion(A)
+    return  n/alpha * ( np.identity(n) - (1-alpha) * C )
 
 def calcula_matriz_C_continua(D): 
     # Función para calcular la matriz de trancisiones C
@@ -144,6 +150,7 @@ def calcula_pagerank(A,alfa):
     b = np.ones(N) # Vector de 1s, multiplicado por el coeficiente correspondiente usando d y N.
     p = resolver_LU(L, U, b) # Resolvemos el sistema LU
     return p
+
 
 #esto construye la matriz de adyacencia continua
 def calcula_matriz_continua(D):
