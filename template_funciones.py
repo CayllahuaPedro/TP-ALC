@@ -123,20 +123,31 @@ def calcula_matriz_C_continua(D):
     # A: Matriz de adyacencia
     # Retorna la matriz C en versión continua
     D = D.copy()
-    F = 1/D
-    np.fill_diagonal(F,0)
-    Kinv = ... # Calcula inversa de la matriz K, que tiene en su diagonal la suma por filas de F 
-    C = ... # Calcula C multiplicando Kinv y F
+    F = calcula_matriz_continua(D)
+    diagonal= np.sum(F, axis=1)
+    Kinv = np.diag(1/diagonal)
+    C = Kinv @ F
     return C
 
-def calcula_B(C,cantidad_de_visitas):
-    # Recibe la matriz T de transiciones, y calcula la matriz B que representa la relación entre el total de visitas y el número inicial de visitantes
-    # suponiendo que cada visitante realizó cantidad_de_visitas pasos
-    # C: Matirz de transiciones
-    # cantidad_de_visitas: Cantidad de pasos en la red dado por los visitantes. Indicado como r en el enunciado
-    # Retorna:Una matriz B que vincula la cantidad de visitas w con la cantidad de primeras visitas v
-    B = np.eye(C.shape[0])
-    for i in range(cantidad_de_visitas-1):
-        # Sumamos las matrices de transición para cada cantidad de pasos
-        B += np.linalg.matrix_power(C, i + 1)
-    return B
+#esto construye la matriz de adyacencia continua
+def calcula_matriz_continua(D):
+    m = D.shape[0]  # fila
+    n = D.shape[1]
+    C = np.zeros((m, n))
+    for j in range(m):
+        for i in range(n):
+            if (j != i):
+                C[j, i] = 1 / D[j, i]
+            else:
+                C[j, i] = 0
+    return C
+
+def calcula_B(C, r):
+    C = C.astype(float)
+    res = np.zeros_like(C, dtype=float)  # acumulador de la suma de matrices
+    k = C.copy()
+    for i in range(r):  # usarlo iterativo
+        res += k
+        k = k @ C
+
+    return res
