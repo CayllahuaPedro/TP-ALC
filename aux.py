@@ -24,6 +24,12 @@ def calcula_transicion(A):
   C = A_t @ K_inv
   return C
 
+#agarra el vector de ranking y devuelve los 3 museos con mayor valor
+def calcula_top_3_museos(p): 
+    top_3 = np.argsort(p)[::-1][:3]
+    return top_3
+    
+
 
 
     

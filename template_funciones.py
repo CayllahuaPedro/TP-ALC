@@ -2,17 +2,36 @@ import numpy as np
 import scipy.linalg
 import matplotlib.pyplot as plt
 import geopandas as gpd
-def construye_adyacencia(D,m): 
-    # Función que construye la matriz de adyacencia del grafo de museos
-    # D matriz de distancias, m cantidad de links por nodo
-    # Retorna la matriz de adyacencia como un numpy.
-    D = D.copy()
+def construye_adyacencia(D, m):
+    n = D.shape[0]
     l = [] # Lista para guardar las filas
+    # Ensure m is an integer right at the start
+    m_int = int(m) 
     for fila in D: # recorriendo las filas, anexamos vectores lógicos
-        l.append(fila<=fila[np.argsort(fila)[m]] ) # En realidad, elegimos todos los nodos que estén a una distancia menor o igual a la del m-esimo más cercano
+        num_elementos = len(fila)
+        if num_elementos == 0: # Handle empty row explicitly
+             l.append(np.zeros(n, dtype=bool)) 
+             continue
+
+        # Ensure index is within bounds using the integer m
+        # Also handles m_int < 0 by clipping to 0 if necessary
+        idx_m_vecino = max(0, min(m_int, num_elementos - 1)) 
+        
+        # Get the sorted indices (these are integers)
+        indices_ordenados = np.argsort(fila)
+        
+        # Get the index *from the original array* corresponding to the m-th smallest distance
+        indice_en_fila_del_m_vecino = indices_ordenados[idx_m_vecino]
+
+        # Now use this index (which MUST be an integer) to get the actual distance value
+        # Cast explicitly to int just to be absolutely certain
+        distancia_m_vecino = fila[int(indice_en_fila_del_m_vecino)] 
+        
+        l.append(fila <= distancia_m_vecino) # En realidad, elegimos todos los nodos que estén a una distancia menor o igual a la del m-esimo más cercano
+        
     A = np.asarray(l).astype(int) # Convertimos a entero
     np.fill_diagonal(A,0) # Borramos diagonal para eliminar autolinks
-    return(A)
+    return A
 
 def calcula_transicion(A):
   n= A.shape[0]
@@ -27,13 +46,6 @@ def calcula_transicion(A):
   C = A_t @ K_inv
   return C
 
-
-def calcula_M (D, m, alpha):
-    #D es la matriz de distancias, m es el numero m vecinos mas cercanos a considerar y alpha el factor de amortiguamiento
-    A= construye_adyacencia(D,m)
-    n= A.shape[0]
-    C = calcula_transicion(A)
-    return  n/alpha * ( np.identity(n) - (1-alpha) * C )
 
 def calculaLU(A):
     # matriz es una matriz de NxN
@@ -105,20 +117,6 @@ def calcula_matriz_C(A):
     C = A_t @ K_inv
     return C
 
-    
-def calcula_pagerank(A,alfa):
-    # Función para calcular PageRank usando LU
-    # A: Matriz de adyacencia
-    # d: coeficientes de damping
-    # Retorna: Un vector p con los coeficientes de page rank de cada museo
-    C = calcula_matriz_C(A)
-    N = ... # Obtenemos el número de museos N a partir de la estructura de la matriz A
-    M = ...
-    L, U = calculaLU(M) # Calculamos descomposición LU a partir de C y d
-    b = ... # Vector de 1s, multiplicado por el coeficiente correspondiente usando d y N.
-    Up = scipy.linalg.solve_triangular(L,b,lower=True) # Primera inversión usando L
-    p = scipy.linalg.solve_triangular(U,Up) # Segunda inversión usando U
-    return p
 
 def calcula_matriz_C_continua(D): 
     # Función para calcular la matriz de trancisiones C
