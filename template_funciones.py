@@ -101,6 +101,7 @@ def resolver_LU (L,U,b):
     # U: matriz triangular superior
     # b: vector de términos independientes
     # Retorna el vector solución x
+    # tenes  L U X = b 
     y = scipy.linalg.solve_triangular(L, b, lower=True)  # Resolvemos Ly = b
     x = scipy.linalg.solve_triangular(U, y)  # Resolvemos Ux = y
     return x
@@ -129,12 +130,29 @@ def calcula_matriz_C_continua(D):
     # Función para calcular la matriz de trancisiones C
     # A: Matriz de adyacencia
     # Retorna la matriz C en versión continua
-    D = D.copy()
-    F = calcula_matriz_continua(D)
-    diagonal= np.sum(F, axis=1)
-    Kinv = np.diag(1/diagonal)
-    C = Kinv @ F
-    return C
+    epsilon= 1e-8
+    m, n = D.shape
+    F = np.zeros((m, n), dtype=float)
+
+    # Vectorización para eficiencia
+    # Evitamos dividir por cero o números muy pequeños en la diagonal (j==i)
+    # y en los casos donde D[j,i] sea muy pequeño
+
+    # Crear una copia para no modificar D original
+    D_mas_eps = D.copy()
+
+    # Asegurar que la diagonal no cause problemas (ya que no la usamos)
+    # y que D[j, i] + epsilon sea siempre > 0
+    np.fill_diagonal(D_mas_eps, np.inf) # Poner infinito en la diagonal asegura 1/inf = 0
+    D_mas_eps += epsilon 
+
+    # Calcular las inversas, los infinitos se volverán 0
+    F = 1.0 / D_mas_eps 
+
+    # Asegurarse de que la diagonal sea cero explícitamente (por si acaso)
+    np.fill_diagonal(F, 0) 
+
+    return F
 
 def calcula_pagerank(A,alfa):
     # Función para calcular PageRank usando LU  
@@ -167,10 +185,11 @@ def calcula_matriz_continua(D):
 
 def calcula_B(C, r):
     C = C.astype(float)
-    res = np.zeros_like(C, dtype=float)  # acumulador de la suma de matrices
-    k = C.copy()
-    for i in range(r):  # usarlo iterativo
-        res += k
-        k = k @ C
-
+    res = np.eye(C.shape[0], dtype=float)  # Empezar con I (C⁰)
+    k = np.eye(C.shape[0], dtype=float)    # k = C⁰ = I
+    
+    for i in range(r):  # r iteraciones
+        res += k @ C    # Suma C¹, C², C³, ...
+        k = k @ C       # k: I → C → C² → C³ → ...
+    
     return res
