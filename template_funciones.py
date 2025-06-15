@@ -133,25 +133,19 @@ def calcula_matriz_C_continua(D):
     epsilon= 1e-8
     m, n = D.shape
     F = np.zeros((m, n), dtype=float)
+    #obtenemos 1/D con un epsilon para asegurarnos de que el divisor sea siempre > 0
+    for i in range(m):
+        for j in range(n):
+            if i != j:
+                F[i, j] = 1 / (D[i, j] + epsilon)
 
-    # Vectorización para eficiencia
-    # Evitamos dividir por cero o números muy pequeños en la diagonal (j==i)
-    # y en los casos donde D[j,i] sea muy pequeño
-
-    # Crear una copia para no modificar D original
-    D_mas_eps = D.copy()
-
-    # Asegurar que la diagonal no cause problemas (ya que no la usamos)
-    # y que D[j, i] + epsilon sea siempre > 0
-    np.fill_diagonal(D_mas_eps, np.inf) # Poner infinito en la diagonal asegura 1/inf = 0
-    D_mas_eps += epsilon 
-
-    # Calcular las inversas, los infinitos se volverán 0
-    F = 1.0 / D_mas_eps 
-
-    # Asegurarse de que la diagonal sea cero explícitamente (por si acaso)
-    np.fill_diagonal(F, 0) 
-
+    #ahora cada elemento le divido la suma de conexiones por fila
+    for i in range(m): 
+        for j in range(n):
+            suma_conexiones = np.sum(F[:,j])
+            if i != j and suma_conexiones > 0:
+                F[i,j] = F[i,j]/suma_conexiones
+    
     return F
 
 def calcula_pagerank(A,alfa):
